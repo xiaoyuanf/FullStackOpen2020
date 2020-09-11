@@ -23,9 +23,9 @@ const Content = ({parts}) => {
   const [first, second, third] = parts
   return (
     <div>
-      <p><Part part={first.name} exercises={first.exercises}/></p>
-      <p><Part part={second.name} exercises={second.exercises}/></p>
-      <p><Part part={third.name} exercises={third.exercises}/></p>
+      <Part part={first.name} exercises={first.exercises}/>
+      <Part part={second.name} exercises={second.exercises}/>
+      <Part part={third.name} exercises={third.exercises}/>
     </div>
   )
 }
