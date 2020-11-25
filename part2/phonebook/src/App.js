@@ -1,13 +1,29 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import axios from 'axios'
+
 import Person from './components/Person'
 import PersonForm from './components/PersonForm'
 import Filter from './components/Filter'
 
+import personService from './services/persons'
+
+
 const App = (props) => {
-  const [ persons, setPersons ] = useState(props.persons) 
+  const [ persons, setPersons ] = useState([]) 
   const [ newName, setNewName ] = useState('')
   const [ newNumber, setNewNumber ] = useState('')
   const [ filterString, setFilterString ] = useState('') 
+
+  useEffect(() => {
+    console.log('effect')
+    personService
+      .getAll()
+      .then(initialPersons => {
+        //console.log(response.data)
+        setPersons(initialPersons)
+      })
+  }, [])
+  console.log('render', persons.length, 'persons')
 
   const addPerson = (event) => {
     event.preventDefault()
@@ -17,15 +33,26 @@ const App = (props) => {
     }
 
     const personObject = {
-      id: persons.length,
+      id: persons.length+1,
       name: newName,
       number: newNumber
     }
 
+    personService
+      .create(personObject)
+      .then(returnedPerson => {
+        setPersons(persons.concat(returnedPerson))
+        setNewName('')
+        setNewNumber('')
+      })
+  }
 
-    setPersons(persons.concat(personObject))
-    setNewName('')
-    setNewNumber('')
+  const deletePerson = (id) => {
+    personService
+      .remove(id)
+      .then(returnedPerson => {
+        setPersons(returnedPerson)
+      })
   }
 
   const handleNewName = (event) => {
@@ -64,8 +91,12 @@ const App = (props) => {
       <h2>Numbers</h2>
       <div>
         {personsToShow.map(person =>
-          <Person key={person.id} person={person} />
+          <Person key={person.id} person={person} 
+          deletePerson={() => deletePerson(person.id)}
+          />
+          
           )}
+
       </div>
     </div>
   )
