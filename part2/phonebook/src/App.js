@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 
-import Person from './components/Person'
+import Persons from './components/Persons'
 import PersonForm from './components/PersonForm'
 import Filter from './components/Filter'
-
+import Notification from './components/Notification'
 import personService from './services/persons'
 
 
@@ -13,17 +13,18 @@ const App = (props) => {
   const [ newName, setNewName ] = useState('')
   const [ newNumber, setNewNumber ] = useState('')
   const [ filterString, setFilterString ] = useState('') 
+  const [ notification, setNotification ] = useState(null)
 
   useEffect(() => {
-    console.log('effect')
+    //console.log('effect')
     personService
       .getAll()
-      .then(initialPersons => {
+      .then((data) => {
         //console.log(response.data)
-        setPersons(initialPersons)
+        setPersons(data)
       })
   }, [])
-  console.log('render', persons.length, 'persons')
+  //console.log('render', persons.length, 'persons')
 
   const addPerson = (event) => {
     event.preventDefault()
@@ -46,17 +47,32 @@ const App = (props) => {
         setNewNumber('')
       })
   }
+  
+  const notifyWith = (message, type='success') => {
+    setNotification({ message, type })
+    setTimeout(() => {
+      setNotification(null)
+    }, 5000)
+  }
 
   const deletePerson = (id) => {
-    personService
+    const toDelete = persons.find(p => p.id === id)
+    const ok = window.confirm(`Delete ${toDelete.name}`)
+    if (ok) {
+      personService
       .remove(id)
-      .then(returnedPerson => {
-        setPersons(returnedPerson)
+      .then(response => {
+        setPersons(response.filter(p => p.id !== id))
+        notifyWith(`Deleted ${toDelete.name}`)
+      }).catch(() => {
+        setPersons(persons.filter(p => p.id !==id))
+        notifyWith(`${toDelete.name} had already been removed`, 'error')
       })
+    }
   }
 
   const handleNewName = (event) => {
-    console.log(event.target.value)
+    //console.log(event.target.value)
     setNewName(event.target.value)
   }
 
@@ -64,9 +80,9 @@ const App = (props) => {
     setNewNumber(event.target.value)
   }
 
-  const personsToShow = (filterString === "") 
-    ? persons
-    : persons.filter(person => person.name.toLowerCase().includes(filterString.toLowerCase()))
+  const personsToShow = filterString.length === 0 ?
+    persons : 
+    persons.filter(p => p.name.toLowerCase().indexOf(filterString.toLowerCase()) >= 0 )
 
 
   const handleFilter = (event) => {
@@ -76,6 +92,8 @@ const App = (props) => {
   return (
     <div>
       <h2>Phonebook</h2>
+
+      <Notification notification = {notification}/>
       <Filter 
         filterString={filterString}
         handleFilter={handleFilter}
@@ -90,13 +108,8 @@ const App = (props) => {
 
       <h2>Numbers</h2>
       <div>
-        {personsToShow.map(person =>
-          <Person key={person.id} person={person} 
-          deletePerson={() => deletePerson(person.id)}
-          />
-          
-          )}
-
+        <Persons persons={personsToShow} 
+          deletePerson={deletePerson}/>
       </div>
     </div>
   )
